@@ -26,6 +26,262 @@ inline const char *const BoolToString(bool b)
     return b ? "1" : "0";
 }
 
+//////////////////////////////////
+//////////////////////////////////
+
+void cycle_generation_starter_subsets(graph G, int n_drones, double budget, long seed, int MAX_COUNTER, double radius_distance, std::string output_data_file, std::string path_cycles)
+{
+    std::vector<std::vector<std::string>> solutions;
+    std::vector<std::string> algs = {
+        "Greedy-TOP",      // A
+        "psuedoKim",       // B
+        "Greedy-ab",       // C
+        "TOP-h",           // D
+        "Greedy-CE",       // E
+        "Greedy-ab-0",     // F
+        "Greedy-ab-0.25",  // G
+        "Greedy-ab-0.5",   // H
+        "Greedy-ab-0.75",  // I
+        "Greedy-ab-1",     // L
+        "Greedy-TOP-B+10", // M
+        "Greedy-TOP-B+20", // N
+        "Greedy-TOP-B+30", // O
+        "Greedy-TOP-B+40", // P
+        "Greedy-TOP-B+50", // Q
+        "psuedoKim-B-10",  // R
+        "psuedoKim-B-20",  // S
+        "psuedoKim-B-30"   // T
+        "psuedoKim-B-40"   // U
+        "psuedoKim-B-50"   // V
+    };
+
+    std::vector<std::string> which_heur_label = {
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V"};
+
+    std::cout << std::endl;
+
+    //
+    simulator_cc sim = simulator_cc(G, n_drones, budget, seed);
+    assert(sim.check_feasibility());
+
+    int k = 0;
+    std::vector<int> quanti_ne_devo_salvare = {50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 750, 100, 1250, 1500, 1750, 2000};
+
+    for (size_t max_c = 0; max_c < 200; max_c++)
+    {
+        for (size_t j = 0; j < 5; j++)
+        {
+            std::vector<std::string> output_cycles = sim.cycle_generation(1, j, budget, radius_distance, 0, which_heur_label[j], output_data_file);
+
+            remove_duplicates_from_matrix(output_cycles);
+            solutions.push_back(output_cycles);
+
+            std::ofstream outfile;
+            outfile.open(output_data_file, std::ios_base::app);
+
+            outfile << " | unici: " << output_cycles.size() << " | s: " << std::to_string(seed) << std::endl;
+
+            outfile.close();
+            std::cout << " | unici: " << output_cycles.size() << " | unici_tot: " << solutions.size() << std::endl;
+
+            if (solutions.size() >= quanti_ne_devo_salvare[k])
+            {
+                std::vector<std::string> all_together;
+                // std::cout << std::endl
+                //           << std::endl;
+                for (int i = 0; i < (int)solutions.size(); i++)
+                {
+                    for (int j = 0; j < (int)solutions.size(); j++)
+                    {
+                        std::vector<std::string> temp;
+                        temp.reserve(temp.size() + solutions[i].size() + solutions[j].size());
+                        temp.insert(temp.end(), solutions[i].begin(), solutions[i].end());
+                        temp.insert(temp.end(), solutions[j].begin(), solutions[j].end());
+
+                        remove_duplicates_from_matrix(temp);
+
+                        double i_plus_j = solutions[i].size() + solutions[j].size();
+                        double i_U_j = temp.size();
+                        double i_int_j = (i_plus_j - i_U_j);
+
+                        // std::cout.precision(2);
+                        // std::cout << (i_int_j / i_U_j) * 100 << "\t";
+                    }
+                    // std::cout << std::endl;
+
+                    all_together.reserve(all_together.size() + solutions[i].size());
+                    all_together.insert(all_together.end(), solutions[i].begin(), solutions[i].end());
+                }
+
+                std::cout << std::endl
+                          << all_together.size() << " ";
+                remove_duplicates_from_matrix(all_together);
+                std::cout << all_together.size() << std::endl;
+
+                std::cout << sim.get_output_hashmap_size() << std::endl;
+
+                assert((int)sim.get_output_hashmap_size() == (int)all_together.size());
+
+                std::string path_cycles = "data/output/cycles_experiment_" + std::to_string(quanti_ne_devo_salvare[k]) + ".csv";
+                sim.print_output_hashmap_to_file(path_cycles);
+                k++;
+            }
+
+            sim.increase_seed();
+        }
+
+        double alpha = 0;
+        for (int i = 5; i < 10; i++)
+        {
+
+            std::vector<std::string> output_cycles = sim.cycle_generation(1, 5, budget, radius_distance, alpha, which_heur_label[i], output_data_file);
+
+            remove_duplicates_from_matrix(output_cycles);
+            solutions.push_back(output_cycles);
+
+            std::ofstream outfile;
+            outfile.open(output_data_file, std::ios_base::app);
+
+            outfile << " | unici: " << output_cycles.size() << " | s: " << std::to_string(seed) << std::endl;
+
+            outfile.close();
+            alpha += 0.25;
+            std::cout << " | unici: " << output_cycles.size() << " | unici_tot: " << solutions.size() << std::endl;
+
+            if (solutions.size() >= quanti_ne_devo_salvare[k])
+            {
+                std::vector<std::string> all_together;
+                // std::cout << std::endl
+                //           << std::endl;
+                for (int i = 0; i < (int)solutions.size(); i++)
+                {
+                    for (int j = 0; j < (int)solutions.size(); j++)
+                    {
+                        std::vector<std::string> temp;
+                        temp.reserve(temp.size() + solutions[i].size() + solutions[j].size());
+                        temp.insert(temp.end(), solutions[i].begin(), solutions[i].end());
+                        temp.insert(temp.end(), solutions[j].begin(), solutions[j].end());
+
+                        remove_duplicates_from_matrix(temp);
+
+                        double i_plus_j = solutions[i].size() + solutions[j].size();
+                        double i_U_j = temp.size();
+                        double i_int_j = (i_plus_j - i_U_j);
+
+                        // std::cout.precision(2);
+                        // std::cout << (i_int_j / i_U_j) * 100 << "\t";
+                    }
+                    // std::cout << std::endl;
+
+                    all_together.reserve(all_together.size() + solutions[i].size());
+                    all_together.insert(all_together.end(), solutions[i].begin(), solutions[i].end());
+                }
+
+                std::cout << std::endl
+                          << all_together.size() << " ";
+                remove_duplicates_from_matrix(all_together);
+                std::cout << all_together.size() << std::endl;
+
+                std::cout << sim.get_output_hashmap_size() << std::endl;
+
+                assert((int)sim.get_output_hashmap_size() == (int)all_together.size());
+
+                std::string path_cycles = "data/output/cycles_experiment_" + std::to_string(quanti_ne_devo_salvare[k]) + ".csv";
+                sim.print_output_hashmap_to_file(path_cycles);
+                k++;
+            }
+
+            sim.increase_seed();
+        }
+
+        int increment = 0;
+        for (int i = 10; i < 15; i++)
+        {
+            double new_budget = budget + budget * (0.1 * (++increment));
+
+            std::vector<std::string> output_cycles = sim.cycle_generation(1, 0, new_budget, radius_distance, 0, which_heur_label[i], output_data_file);
+
+            remove_duplicates_from_matrix(output_cycles);
+            solutions.push_back(output_cycles);
+
+            std::ofstream outfile;
+            outfile.open(output_data_file, std::ios_base::app);
+
+            outfile << " | unici: " << output_cycles.size() << " | " << std::to_string(seed) << std::endl;
+
+            outfile.close();
+            std::cout << " | unici: " << output_cycles.size() << " | unici_tot: " << solutions.size() << std::endl;
+
+            if (solutions.size() >= quanti_ne_devo_salvare[k])
+            {
+                std::vector<std::string> all_together;
+                // std::cout << std::endl
+                //           << std::endl;
+                for (int i = 0; i < (int)solutions.size(); i++)
+                {
+                    for (int j = 0; j < (int)solutions.size(); j++)
+                    {
+                        std::vector<std::string> temp;
+                        temp.reserve(temp.size() + solutions[i].size() + solutions[j].size());
+                        temp.insert(temp.end(), solutions[i].begin(), solutions[i].end());
+                        temp.insert(temp.end(), solutions[j].begin(), solutions[j].end());
+
+                        remove_duplicates_from_matrix(temp);
+
+                        double i_plus_j = solutions[i].size() + solutions[j].size();
+                        double i_U_j = temp.size();
+                        double i_int_j = (i_plus_j - i_U_j);
+
+                        // std::cout.precision(2);
+                        // std::cout << (i_int_j / i_U_j) * 100 << "\t";
+                    }
+                    // std::cout << std::endl;
+
+                    all_together.reserve(all_together.size() + solutions[i].size());
+                    all_together.insert(all_together.end(), solutions[i].begin(), solutions[i].end());
+                }
+
+                std::cout << std::endl
+                          << all_together.size() << " ";
+                remove_duplicates_from_matrix(all_together);
+                std::cout << all_together.size() << std::endl;
+
+                std::cout << sim.get_output_hashmap_size() << std::endl;
+
+                assert((int)sim.get_output_hashmap_size() == (int)all_together.size());
+
+                std::string path_cycles = "data/output/cycles_experiment_" + std::to_string(quanti_ne_devo_salvare[k]) + ".csv";
+                sim.print_output_hashmap_to_file(path_cycles);
+                k++;
+            }
+
+            sim.increase_seed();
+        }
+    }
+}
+
+//////////////////////////////////
+//////////////////////////////////
+
 void cycle_generation_starter(graph G, int n_drones, double budget, long seed, int MAX_COUNTER, double radius_distance, std::string output_data_file, std::string path_cycles)
 {
     std::vector<std::vector<std::string>> solutions;
@@ -76,11 +332,11 @@ void cycle_generation_starter(graph G, int n_drones, double budget, long seed, i
 
     std::cout << std::endl;
 
-    // 
+    //
     simulator_cc sim = simulator_cc(G, n_drones, budget, seed);
     assert(sim.check_feasibility());
 
-    MAX_COUNTER = 100;
+    MAX_COUNTER = 10000;
     for (int i = 0; i < 5; i++)
     {
         std::vector<std::string> output_cycles = sim.cycle_generation(MAX_COUNTER, i, budget, radius_distance, 0, which_heur_label[i], output_data_file);
@@ -208,7 +464,14 @@ void simulation_compute_cycles(input n_input)
     G.create_random_graph(n_input.n_nodes, 0, n_input.seed);
     G.print_graph_to_file(path_graph);
 
-    cycle_generation_starter(G, n_input.n_drones, n_input.budget, n_input.seed, MAX_COUNTER, radius_distance, output_data_file, path_cycles);
+    if (n_input.experiment == 3)
+    {
+        cycle_generation_starter_subsets(G, n_input.n_drones, n_input.budget, n_input.seed, MAX_COUNTER, radius_distance, output_data_file, path_cycles);
+    }
+    else
+    {
+        cycle_generation_starter(G, n_input.n_drones, n_input.budget, n_input.seed, MAX_COUNTER, radius_distance, output_data_file, path_cycles);
+    }
 }
 
 void simulation_compute_cycles_with_grids(input n_input)
@@ -248,6 +511,9 @@ int main(int argc, char **argv)
         break;
     case 2: // --generate-trips grid
         simulation_compute_cycles_with_grids(n_input);
+        break;
+    case 3:
+        simulation_compute_cycles(n_input);
         break;
     default:
         std::cerr << "\n[ERROR main] experiment to run not present\n";

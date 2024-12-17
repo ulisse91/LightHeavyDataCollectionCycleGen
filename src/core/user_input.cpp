@@ -52,7 +52,7 @@ input userinput::read_user_input(int argc, char **argv)
             }
         }
 
-        if (n_input.experiment == 1)
+        if (n_input.experiment == 1 or n_input.experiment == 3)
         {
 
             if (vm.count("graphfile"))

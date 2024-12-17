@@ -46,6 +46,8 @@ public:
 
     bool check_feasibility();
 
+    void increase_seed();
+
     std::vector<std::vector<int>> greedy_top(double budget, long seed);
     std::vector<std::vector<int>> prim_based(double given_budget, long seed);
     std::vector<std::vector<int>> top_heur(double given_budget, long given_seed);

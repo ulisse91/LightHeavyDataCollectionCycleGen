@@ -10,6 +10,10 @@ simulator_cc::simulator_cc(graph _G, int _drones, double _budget, long _seed)
 
 simulator_cc::~simulator_cc() {}
 
+void simulator_cc::increase_seed() {
+    this->seed++;
+}
+
 bool simulator_cc::check_feasibility()
 {
     for (auto &v : this->G.get_vertices())
